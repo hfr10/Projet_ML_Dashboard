@@ -2,53 +2,50 @@
 """
 Predict util for the trained model.
 
-- Loads model, scaler and feature list from models/
-- Provides functions to preprocess raw inputs and predict
-- CLI allows quick local tests:
+- Charge le modèle, le scaler et la liste des caractéristiques depuis models/
+- Fournit des fonctions pour prétraiter les entrées brutes et prédire
+- CLI (interface en ligne de commande) permet des tests locaux rapides :
   python src/predict_model.py --json '{"year":2018,"mileage":20000,...}'
   python src/predict_model.py --json-file samples/input.json
   python src/predict_model.py --csv-file samples/inputs.csv --output samples/preds.csv
 """
 import os
 import json
-import argparse
-from typing import List, Optional, Tuple
+import argparse #pour construire l'interface en ligne de commande
 
 import pandas as pd
 import joblib
 import numpy as np
 
-# ----------------- Paths / defaults -----------------
-BASE_DIR = os.path.dirname(__file__)  # src/
-MODELS_DIR = os.path.join(BASE_DIR, '../models')
-MODEL_PATH = os.path.join(MODELS_DIR, 'random_forest_model.pkl')
-SCALER_PATH = os.path.join(MODELS_DIR, 'scaler.pkl')
-COLUMNS_PATH = os.path.join(MODELS_DIR, 'columns.json')
+#Chemin / constantes par défaut
+BASE_DIR = os.path.dirname(__file__)  #dossier du script (src/) pour construire les cheminsrelatifs
+MODELS_DIR = os.path.join(BASE_DIR, '../models') #dossier models/ où sont les artefacts sauvegardés
+MODEL_PATH = os.path.join(MODELS_DIR, 'random_forest_model.pkl') #chemin vers le modèle ML préentrainé
+SCALER_PATH = os.path.join(MODELS_DIR, 'scaler.pkl') #chemin vers le scaler
+COLUMNS_PATH = os.path.join(MODELS_DIR, 'columns.json') #chemain vers la liste des colonnes
 
-# These must match what you used during preprocessing
-NUMERIC_COLS = ['year', 'mileage', 'engineSize', 'tax', 'mpg']
-CATEGORICAL_COLS = ['model', 'transmission', 'fuelType']  # will be one-hot encoded with drop_first=True
+#Colonnes à traiter (les mêmes que dans data_preprocessing.py)
+NUMERIC_COLS = ['year', 'mileage', 'engineSize', 'tax', 'mpg'] #colonnes qui coivent être scalées
+CATEGORICAL_COLS = ['model', 'transmission', 'fuelType']  #colonnes catégorielles qui seront transformées en one-hot | encodage one-hot | création de colonnes binaires
 
-# ----------------- Load artifacts -----------------
-def load_artifacts(model_path: str = MODEL_PATH,
-                   scaler_path: str = SCALER_PATH,
-                   columns_path: str = COLUMNS_PATH):
+#Chargement des artéfacts
+def load_artifacts(model_path=MODEL_PATH, scaler_path=SCALER_PATH, columns_path=COLUMNS_PATH):
     """
     Charge et retourne (model, scaler_or_None, feature_columns_or_None).
     """
-    if not os.path.exists(model_path):
-        raise FileNotFoundError(f"Model not found: {model_path}. Train first.")
+    if not os.path.exists(model_path): #vérifie si le fichier pointé existe
+        raise FileNotFoundError(f"Model not found: {model_path}. Train first.") #si le fichier n'existe pas on lève une exception
 
-    model = joblib.load(model_path)
+    model = joblib.load(model_path) #chargement depuis le fichier du modèle sérialisé
 
-    scaler = None
-    if os.path.exists(scaler_path):
-        scaler = joblib.load(scaler_path)
+    scaler = None #initialisation par défaut
+    if os.path.exists(scaler_path): #teste si scaler.plk a bien été sauvegardé
+        scaler = joblib.load(scaler_path) #si le fichier existe on recharge l'objet StandardScaler
 
-    feature_columns = None
-    if os.path.exists(columns_path):
-        with open(columns_path, 'r', encoding='utf-8') as f:
-            feature_columns = json.load(f)
+    feature_columns = None #initialisation par défaut
+    if os.path.exists(columns_path): #vérifie si la liste des colonnes est présente
+        with open(columns_path, 'r', encoding='utf-8') as f: #ouvre le fichier en lecture 'r' (read) et le stocke dans f
+            feature_columns = json.load(f) #lecture du json
 
     return model, scaler, feature_columns
 
