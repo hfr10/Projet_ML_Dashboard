@@ -1,0 +1,10 @@
+{
+  "year": 2018,
+  "mileage": 30000,
+  "engineSize": 1.6,
+  "tax": 150,
+  "mpg": 50,
+  "model": "A Class",
+  "transmission": "Manual",
+  "fuelType": "Petrol"
+}
